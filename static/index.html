@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DefectSense AI</title>
+  <style>
+    /* ══════════════════════════════════════════════════════════════════════
+       DESIGN SYSTEM — Light mode default (toggle adds [data-theme="dark"])
+       Palette: cool slate-blue rather than the tired amber-on-black look.
+       Light feels like a calibration lab; dark feels like a control room.
+    ══════════════════════════════════════════════════════════════════════ */
+    :root {
+      --bg:           #eef2fb;
+      --surface:      #ffffff;
+      --surface2:     #e4eaf7;
+      --border:       #cdd5e8;
+      --border-focus: #2563eb;
+      --accent:       #2563eb;
+      --accent-dim:   rgba(37,99,235,0.10);
+      --accent-mid:   rgba(37,99,235,0.22);
+      --violet:       #6d28d9;
+      --green:        #059669;
+      --red:          #dc2626;
+      --orange:       #d97706;
+      --blue:         #0284c7;
+      --text:         #1e293b;
+      --text-muted:   #64748b;
+      --text-dim:     #94a3b8;
+      --shadow:       0 1px 4px rgba(30,41,59,0.08), 0 4px 16px rgba(30,41,59,0.06);
+      --shadow-lg:    0 4px 24px rgba(30,41,59,0.14);
+      --font-mono:    'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --font-sans:    -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      --radius:       7px;
+      --radius-lg:    12px;
+      --sidebar-w:    228px;
+    }
+
+    [data-theme="dark"] {
+      --bg:           #0d1424;
+      --surface:      #152036;
+      --surface2:     #1e2f4a;
+      --border:       #2a3f60;
+      --border-focus: #3b82f6;
+      --accent:       #3b82f6;
+      --accent-dim:   rgba(59,130,246,0.12);
+      --accent-mid:   rgba(59,130,246,0.25);
+      --violet:       #8b5cf6;
+      --green:        #10b981;
+      --red:          #ef4444;
+      --orange:       #f59e0b;
+      --blue:         #38bdf8;
+      --text:         #e2e8f4;
+      --text-muted:   #8ba3c4;
+      --text-dim:     #4d6a8f;
+      --shadow:       0 1px 4px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
+      --shadow-lg:    0 4px 24px rgba(0,0,0,0.5);
+    }
+
+    /* ── Reset ───────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%; font-family: var(--font-sans);
+      background: var(--bg); color: var(--text);
+      font-size: 14px; line-height: 1.6;
+      transition: background 0.2s, color 0.2s;
+    }
+    .hidden { display: none !important; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════════════════════════════════════════════ */
+    #login-screen {
+      min-height: 100vh; display: flex;
+      align-items: center; justify-content: center;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 15% 20%, rgba(37,99,235,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 80%, rgba(109,40,217,0.05) 0%, transparent 55%);
+    }
+    .login-card {
+      width: 400px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 36px; box-shadow: var(--shadow-lg);
+    }
+    .login-logo { display: flex; align-items: center; gap: 11px; margin-bottom: 6px; }
+    .pulse-ring {
+      width: 13px; height: 13px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 0 var(--accent-mid);
+      animation: ringpulse 2.2s ease-in-out infinite;
+    }
+    @keyframes ringpulse {
+      0%   { box-shadow: 0 0 0 0 var(--accent-mid); }
+      60%  { box-shadow: 0 0 0 7px transparent; }
+      100% { box-shadow: 0 0 0 0 transparent; }
+    }
+    .login-title { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+    .login-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 28px; padding-left: 24px; }
+    .demo-hint {
+      margin-top: 18px; padding: 11px 14px;
+      background: var(--accent-dim); border: 1px solid var(--accent-mid);
+      border-radius: var(--radius); font-size: 12px; color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .demo-hint strong { color: var(--accent); }
+
+    /* ── Form elements ───────────────────────────────────────────────── */
+    .form-group { margin-bottom: 14px; }
+    label {
+      display: block; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-muted); margin-bottom: 5px;
+    }
+    input, select, textarea {
+      width: 100%; padding: 9px 12px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-size: 14px; font-family: var(--font-sans); outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    select option { background: var(--surface2); }
+    textarea { resize: vertical; min-height: 76px; }
+    .form-toggle { text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+    .form-toggle a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+    .alert { padding: 9px 13px; border-radius: var(--radius); font-size: 13px; margin-bottom: 14px; }
+    .alert-error   { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.25); color: #ef4444; }
+    .alert-success { background: rgba(5,150,105,0.08); border: 1px solid rgba(5,150,105,0.25); color: #10b981; }
+
+    /* ── Buttons ─────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 7px; padding: 9px 18px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+      transition: all 0.15s; text-decoration: none; font-family: var(--font-sans);
+    }
+    .btn-primary { background: var(--accent); color: #fff; width: 100%; padding: 11px; }
+    .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+    .btn-primary:active { transform: none; }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: none; }
+    .btn-success { background: var(--green); color: #fff; }
+    .btn-success:hover { filter: brightness(1.1); }
+    .btn-danger  { background: var(--red); color: #fff; }
+    .btn-danger:hover  { filter: brightness(1.1); }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .btn-violet { background: var(--violet); color: #fff; }
+    .btn-violet:hover { filter: brightness(1.1); }
+    .btn-sm { padding: 5px 11px; font-size: 12px; }
+    .btn-icon {
+      width: 30px; height: 30px; padding: 0; border-radius: 6px;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-muted); cursor: pointer; display: inline-flex;
+      align-items: center; justify-content: center; font-size: 15px;
+      transition: all 0.15s;
+    }
+    .btn-icon:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       APP LAYOUT
+    ══════════════════════════════════════════════════════════════════════ */
+    #app-screen { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ─────────────────────────────────────────────────────── */
+    #sidebar {
+      width: var(--sidebar-w); min-width: var(--sidebar-w);
+      background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .sidebar-head {
+      padding: 17px 16px 13px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .sidebar-brand { display: flex; align-items: center; gap: 9px; }
+    .sidebar-name { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
+    .sidebar-tag  { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+    #nav-links { list-style: none; padding: 10px 8px; flex: 1; overflow-y: auto; }
+    #nav-links li { margin-bottom: 1px; }
+    #nav-links button {
+      width: 100%; padding: 8px 11px; background: transparent; border: none;
+      border-radius: var(--radius); color: var(--text-muted); font-size: 13px;
+      font-weight: 500; cursor: pointer; text-align: left;
+      display: flex; align-items: center; gap: 9px; transition: all 0.12s;
+    }
+    #nav-links button:hover { background: var(--surface2); color: var(--text); }
+    #nav-links button.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+    .nav-icon { font-size: 15px; width: 19px; text-align: center; }
+
+    /* ── Sidebar footer ──────────────────────────────────────────────── */
+    #sidebar-footer { padding: 12px 14px; border-top: 1px solid var(--border); }
+    .user-name { font-weight: 600; font-size: 13px; color: var(--text); }
+    .role-pill {
+      display: inline-block; margin-top: 3px; padding: 2px 8px;
+      border-radius: 20px; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+    }
+    .role-operator { background: rgba(2,132,199,0.12); color: #0284c7; }
+    .role-inspector { background: rgba(109,40,217,0.12); color: #7c3aed; }
+    .role-manager   { background: rgba(5,150,105,0.12); color: #059669; }
+    .btn-logout {
+      width: 100%; margin-top: 9px; padding: 7px;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text-muted);
+      font-size: 12px; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Main content ────────────────────────────────────────────────── */
+    #main-content { flex: 1; overflow-y: auto; padding: 26px 30px; }
+    .page-header { margin-bottom: 24px; }
+    .page-title { font-size: 19px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+    .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+    .view { display: block; }
+
+    /* ── Card ────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 22px; margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 14px;
+    }
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .toolbar-title { font-size: 14px; font-weight: 600; color: var(--text); }
+
+    /* ── Status badges ───────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 20px; font-size: 10px;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .badge-pending    { background: rgba(100,116,139,0.12); color: #64748b; }
+    .badge-processing { background: rgba(2,132,199,0.12);   color: #0284c7; }
+    .badge-awaiting   { background: rgba(217,119,6,0.12);   color: #d97706; }
+    .badge-reviewed   { background: rgba(5,150,105,0.12);   color: #059669; }
+    .badge-failed     { background: rgba(220,38,38,0.12);   color: #dc2626; }
+    .badge-defective  { background: rgba(220,38,38,0.12);   color: #dc2626; }
+    .badge-clear      { background: rgba(5,150,105,0.12);   color: #059669; }
+    .badge-operator   { background: rgba(2,132,199,0.12);   color: #0284c7; }
+    .badge-inspector  { background: rgba(109,40,217,0.12);  color: #6d28d9; }
+    .badge-manager    { background: rgba(5,150,105,0.12);   color: #059669; }
+
+    /* ── Table ───────────────────────────────────────────────────────── */
+    .table-wrapper {
+      overflow-x: auto; border-radius: var(--radius-lg);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+      background: var(--surface); border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); cursor: pointer; }
+    tbody td { padding: 11px 14px; font-size: 13px; color: var(--text-muted); vertical-align: middle; }
+    .td-name { color: var(--text); font-weight: 500; font-size: 13px; }
+    .td-mono { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+
+    /* ── Confidence bar ──────────────────────────────────────────────── */
+    .conf-bar { display: flex; align-items: center; gap: 7px; }
+    .conf-track { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .conf-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+    .conf-fill.high   { background: var(--red); }
+    .conf-fill.medium { background: var(--orange); }
+    .conf-fill.low    { background: var(--green); }
+    .conf-label { font-size: 11px; font-weight: 700; min-width: 36px; text-align: right; color: var(--text-muted); }
+
+    /* ── Upload zone ─────────────────────────────────────────────────── */
+    #upload-zone {
+      border: 2px dashed var(--border); border-radius: var(--radius-lg);
+      padding: 44px 28px; text-align: center; cursor: pointer;
+      transition: all 0.2s; background: var(--surface); box-shadow: var(--shadow);
+    }
+    #upload-zone:hover, #upload-zone.dragging {
+      border-color: var(--accent); background: var(--accent-dim);
+    }
+    .upload-icon { font-size: 42px; margin-bottom: 10px; }
+    #file-input { display: none; }
+
+    /* ── Stats grid ──────────────────────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+    .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 5px; }
+    .stat-value { font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--text); }
+    .stat-value.c-accent  { color: var(--accent); }
+    .stat-value.c-green   { color: var(--green);  }
+    .stat-value.c-red     { color: var(--red);    }
+    .stat-value.c-blue    { color: var(--blue);   }
+    .stat-value.c-violet  { color: var(--violet); }
+    .meter-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+    .meter-track { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+    .meter-fill { height: 100%; border-radius: 4px; transition: width 0.7s ease; }
+
+    /* ── Modal ───────────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.55);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px; backdrop-filter: blur(3px);
+    }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); width: 100%; max-width: 680px;
+      max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+    }
+    .modal-header {
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; background: var(--surface); z-index: 1;
+    }
+    .modal-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .modal-body { padding: 22px; }
+    #modal-img {
+      max-width: 100%; max-height: 290px; border-radius: var(--radius);
+      border: 1px solid var(--border); object-fit: contain;
+      display: block; margin: 0 auto 18px;
+      background: var(--surface2);
+    }
+    .modal-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 18px; }
+    .meta-item { background: var(--surface2); border-radius: var(--radius); padding: 9px 12px; }
+    .meta-key { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 2px; }
+    .meta-val { font-size: 13px; color: var(--text); font-weight: 500; }
+
+    /* ── Verdict box ─────────────────────────────────────────────────── */
+    .verdict-box { border-radius: var(--radius); padding: 14px 18px; margin-bottom: 14px; border: 1px solid; }
+    .verdict-box.defective { background: rgba(220,38,38,0.06); border-color: rgba(220,38,38,0.25); }
+    .verdict-box.clear     { background: rgba(5,150,105,0.06); border-color: rgba(5,150,105,0.25); }
+    .verdict-box.neutral   { background: var(--surface2); border-color: var(--border); }
+    .verdict-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 5px; }
+    .verdict-result { font-family: var(--font-mono); font-size: 18px; font-weight: 700; margin-bottom: 9px; }
+    .verdict-result.defective { color: var(--red); }
+    .verdict-result.clear     { color: var(--green); }
+    .review-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 12px 0; }
+
+    /* ── Profile / Settings card ─────────────────────────────────────── */
+    .settings-section { margin-bottom: 24px; }
+    .settings-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+    /* ── User management table ───────────────────────────────────────── */
+    .user-row-active   { }
+    .user-row-inactive { opacity: 0.55; }
+    select.role-select { padding: 4px 8px; font-size: 12px; width: auto; }
+
+    /* ── Toast ───────────────────────────────────────────────────────── */
+    #toast-container { position: fixed; bottom: 22px; right: 22px; z-index: 9999; display: flex; flex-direction: column; gap: 7px; }
+    .toast {
+      padding: 10px 16px; border-radius: var(--radius); font-size: 13px;
+      font-weight: 500; max-width: 320px; border: 1px solid;
+      animation: slideIn 0.22s ease; box-shadow: var(--shadow-lg);
+    }
+    .toast-success { background: var(--surface); border-color: var(--green); color: var(--green); }
+    .toast-error   { background: var(--surface); border-color: var(--red);   color: var(--red);   }
+    .toast-info    { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+    @keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ── Spinner / empty state ───────────────────────────────────────── */
+    .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.65s linear infinite; margin: 22px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { text-align: center; color: var(--text-muted); font-size: 13px; }
+    .empty-state { text-align: center; padding: 44px 28px; color: var(--text-muted); }
+    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-title { font-size: 14px; font-weight: 600; color: var(--text-dim); }
+    .empty-msg { font-size: 13px; margin-top: 3px; }
+
+    /* ── Dark mode toggle button ─────────────────────────────────────── */
+    #theme-toggle {
+      background: transparent; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-muted); cursor: pointer; padding: 4px 7px;
+      font-size: 14px; line-height: 1; transition: all 0.15s;
+    }
+    #theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── RBAC info box (for the summary view) ────────────────────────── */
+    .rbac-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .rbac-card { background: var(--surface2); border-radius: var(--radius); padding: 14px; border: 1px solid var(--border); }
+    .rbac-role { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .rbac-perms { font-size: 12px; color: var(--text-muted); line-height: 1.8; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  LOGIN SCREEN
+══════════════════════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="pulse-ring"></div>
+      <span class="login-title">DefectSense AI</span>
+    </div>
+    <p class="login-sub">Quality Control & Inspection Platform</p>
+
+    <div id="auth-error" class="alert alert-error hidden"></div>
+    <div id="auth-success" class="alert alert-success hidden"></div>
+
+    <div id="login-form">
+      <div class="form-group">
+        <label for="login-username">Username</label>
+        <input id="login-username" type="text" placeholder="your.username" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="form-toggle">No account? <a onclick="toggleAuthForm()">Register here</a></div>
+    </div>
+
+    <div id="register-form" class="hidden">
+      <div class="form-group">
+        <label for="reg-username">Username</label>
+        <input id="reg-username" type="text" placeholder="your.username" />
+      </div>
+      <div class="form-group">
+        <label for="reg-email">Email</label>
+        <input id="reg-email" type="email" placeholder="you@factory.com" />
+      </div>
+      <div class="form-group">
+        <label for="reg-password">Password</label>
+        <input id="reg-password" type="password" placeholder="••••••••" />
+      </div>
+      <div class="form-group">
+        <label for="reg-role">Role</label>
+        <select id="reg-role">
+          <option value="operator">Operator — upload images</option>
+          <option value="inspector">Inspector — review queue</option>
+          <option value="manager">Manager — full access</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="doRegister()">Create Account</button>
+      <div class="form-toggle">Already registered? <a onclick="toggleAuthForm()">Sign in</a></div>
+    </div>
+
+    <div class="demo-hint">
+      <strong>Demo logins:</strong><br/>
+      Manager: <strong>admin</strong> / admin123<br/>
+      Inspector: <strong>inspector1</strong> / inspect123<br/>
+      Operator: <strong>operator1</strong> / operate123
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  MAIN APP
+══════════════════════════════════════════════════════════════════════════ -->
+<div id="app-screen" class="hidden">
+
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-brand">
+        <div class="pulse-ring"></div>
+        <div>
+          <div class="sidebar-name">DefectSense</div>
+          <div class="sidebar-tag">Quality Control AI</div>
+        </div>
+      </div>
+      <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">☀︎</button>
+    </div>
+
+    <ul id="nav-links"></ul>
+
+    <div id="sidebar-footer">
+      <div class="user-name" id="sidebar-username">…</div>
+      <div class="role-pill" id="sidebar-role-badge"></div>
+      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main id="main-content">
+
+    <!-- VIEW: Upload (operators + managers) -->
+    <div id="view-upload" class="view hidden">
+      <div class="page-header">
+        <div class="page-title">Upload Image</div>
+        <div class="page-subtitle">Submit a production-line photo for AI defect analysis</div>
+      </div>
+      <div id="upload-zone" onclick="document.getElementById('file-input').click()"
+           ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
+        <div class="upload-icon">📷</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text)">Click to choose a photo</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:5px">or drag and drop it here</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:3px">JPG · PNG · BMP · TIFF · WEBP · max 10 MB</div>
+      </div>
+      <input id="file-input" type="file" accept="image/*" onchange="handleFileSelect(event)" />
+      <div id="upload-preview" style="margin-top:16px;display:none;">
+        <div class="card">
+          <div style="display:flex;gap:16px;align-items:flex-start">
+            <img id="preview-img" src="" alt="Preview" style="width:100px;height:100px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border);" />
+            <div style="flex:1">
+              <div style="font-weight:600;margin-bottom:3px" id="preview-filename">filename.jpg</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px" id="preview-size">0 KB</div>
+              <button class="btn btn-primary" id="upload-btn" onclick="doUpload()" style="width:auto;padding:9px 22px;">
+                ⚡ Submit for Analysis
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:26px">
+        <div class="toolbar">
+          <div class="toolbar-title">My Uploads</div>
+          <button class="btn btn-ghost btn-sm" onclick="loadMyImages()">↻ Refresh</button>
+        </div>
+        <div id="my-images-container"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- VIEW: Review Queue (inspectors + managers) -->
+    <div id="view-queue" class="view hidden">
+      <div class="page-header">
+        <div class="page-title">Review Queue</div>
+        <div class="page-subtitle">AI-processed images awaiting your inspection decision</div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-title" id="queue-count-label">Loading…</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadReviewQueue()">↻ Refresh</button>
+      </div>
+      <div id="queue-container"><div class="spinner"></div></div>
+    </div>
+
+    <!-- VIEW: All Images (managers) -->
+    <div id="view-all-images" class="view hidden">
+      <div class="page-header">
+        <div class="page-title">All Images</div>
+        <div class="page-subtitle">Every image uploaded across the platform</div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-title" id="all-images-count">Loading…</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadAllImages()">↻ Refresh</button>
+      </div>
+      <div id="all-images-container"><div class="spinner"></div></div>
+    </div>
+
+    <!-- VIEW: Dashboard / Stats (managers) -->
+    <div id="view-stats" class="view hidden">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">Platform-wide metrics and performance overview</div>
+      </div>
+      <div id="stats-container"><div class="spinner"></div></div>
+    </div>
+
+    <!-- VIEW: Review History (inspectors + managers) -->
+    <div id="view-history" class="view hidden">
+      <div class="page-header">
+        <div class="page-title">Review History</div>
+        <div class="page-subtitle">Complete audit trail of all inspection decisions</div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-title" id="history-count">Loading…</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadHistory()">↻ Refresh</button>
+      </div>
+      <div id="history-container"><div class="spinner"></div></div>
+    </div>
+
+    <!-- VIEW: User Management (managers) -->
+    <div id="view-users" class="view hidden">
+      <div class="page-header">
+        <div class="page-title">User Management</div>
+        <div class="page-subtitle">All registered accounts — manage roles and access</div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-title" id="users-count">Loading…</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻ Refresh</button>
+      </div>
+      <div id="users-container"><div class="spinner"></div></div>
+    </div>
+
+    <!-- VIEW: Profile / Settings (all roles) -->
+    <div id="view-profile" class="view hidden">
+      <div class="page-header">
+        <div class="page-title">Account Settings</div>
+        <div class="page-subtitle">Update your display name, email, and password</div>
+      </div>
+
+      <!-- Update profile -->
+      <div class="card">
+        <div class="settings-title">Profile Information</div>
+        <div id="profile-alert" class="alert hidden" style="margin-bottom:14px"></div>
+        <div class="form-group">
+          <label for="prof-username">Username</label>
+          <input id="prof-username" type="text" />
+        </div>
+        <div class="form-group">
+          <label for="prof-email">Email</label>
+          <input id="prof-email" type="email" />
+        </div>
+        <button class="btn btn-primary" onclick="saveProfile()" style="width:auto;padding:9px 22px;">
+          Save Changes
+        </button>
+      </div>
+
+      <!-- Change password -->
+      <div class="card">
+        <div class="settings-title">Change Password</div>
+        <div id="pwd-alert" class="alert hidden" style="margin-bottom:14px"></div>
+        <div class="form-group">
+          <label for="pwd-old">Current Password</label>
+          <input id="pwd-old" type="password" placeholder="••••••••" />
+        </div>
+        <div class="form-group">
+          <label for="pwd-new">New Password</label>
+          <input id="pwd-new" type="password" placeholder="••••••••" />
+        </div>
+        <div class="form-group">
+          <label for="pwd-confirm">Confirm New Password</label>
+          <input id="pwd-confirm" type="password" placeholder="••••••••" />
+        </div>
+        <button class="btn btn-ghost" onclick="changePassword()" style="border-color:var(--accent);color:var(--accent)">
+          Update Password
+        </button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="modal-overlay hidden" onclick="closeModalOnBackdrop(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Image Details</div>
+      <button class="btn-icon" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Reset Password Modal (manager -> someone else's account) -->
+<div id="reset-pwd-modal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Reset Password — <span id="reset-pwd-username"></span></div>
+      <button class="btn-icon" onclick="closeResetPasswordModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- form state -->
+      <div id="reset-pwd-form">
+        <div id="reset-pwd-alert" class="alert hidden" style="margin-bottom:14px"></div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">
+          Set a new password for this account. There's no email step here —
+          you'll need to tell them the new password yourself.
+        </p>
+        <div class="form-group">
+          <label for="reset-pwd-input">New Password</label>
+          <input id="reset-pwd-input" type="text" placeholder="At least 6 characters" />
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="generateRandomPassword()" style="margin-bottom:14px">
+          🎲 Generate random password
+        </button>
+        <button class="btn btn-primary" onclick="confirmResetPassword()">Reset Password</button>
+      </div>
+
+      <!-- success state -->
+      <div id="reset-pwd-success" class="hidden">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">
+          Password for <strong id="reset-pwd-success-username"></strong> has been reset to:
+        </p>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--text);user-select:all" id="reset-pwd-success-value"></div>
+          <button class="btn-icon" onclick="copyResetPassword()" title="Copy to clipboard">📋</button>
+        </div>
+        <div class="alert alert-success" style="margin-bottom:14px">
+          This is shown once — make sure you've copied or noted it before closing.
+        </div>
+        <button class="btn btn-primary" onclick="closeResetPasswordModal()">Done</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════ */
+const API = '';
+let token = localStorage.getItem('token');
+let currentUser = null;
+let selectedFile = null;
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME TOGGLE
+═══════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-toggle').textContent = isDark ? '☀︎' : '☽';
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+// Restore saved theme on load
+(function() {
+  const saved = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  // Icon set after DOM ready
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = saved === 'dark' ? '☽' : '☀︎';
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   API HELPER
+═══════════════════════════════════════════════════════════════ */
+async function api(method, path, body = null) {
+  const headers = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const options = { method, headers };
+  if (body) {
+    if (body instanceof FormData) { options.body = body; }
+    else { headers['Content-Type'] = 'application/json'; options.body = JSON.stringify(body); }
+  }
+  const response = await fetch(API + path, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.detail || `Error ${response.status}`);
+  return data;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════════════ */
+function toggleAuthForm() {
+  document.getElementById('login-form').classList.toggle('hidden');
+  document.getElementById('register-form').classList.toggle('hidden');
+  clearAuthMessages();
+}
+function clearAuthMessages() {
+  ['auth-error','auth-success'].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = ''; el.classList.add('hidden');
+  });
+}
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.classList.remove('hidden');
+}
+function showAuthSuccess(msg) {
+  const el = document.getElementById('auth-success');
+  el.textContent = msg; el.classList.remove('hidden');
+}
+
+async function doLogin() {
+  clearAuthMessages();
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username || !password) { showAuthError('Please enter username and password.'); return; }
+  try {
+    const result = await api('POST', '/api/auth/login', { username, password });
+    token = result.access_token;
+    localStorage.setItem('token', token);
+    currentUser = result.user;
+    enterApp();
+  } catch (err) { showAuthError(err.message); }
+}
+
+async function doRegister() {
+  clearAuthMessages();
+  const username = document.getElementById('reg-username').value.trim();
+  const email    = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const role     = document.getElementById('reg-role').value;
+  if (!username || !email || !password) { showAuthError('Please fill in all fields.'); return; }
+  try {
+    await api('POST', '/api/auth/register', { username, email, password, role });
+    showAuthSuccess('Account created! You can now sign in.');
+    toggleAuthForm();
+    document.getElementById('login-username').value = username;
+  } catch (err) { showAuthError(err.message); }
+}
+
+function doLogout() {
+  token = null; currentUser = null;
+  localStorage.removeItem('token');
+  document.getElementById('app-screen').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+
+  // the login screen just gets unhidden, not rebuilt — so whatever was
+  // typed in last time is still sitting in these inputs unless we clear
+  // it ourselves
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('reg-username').value = '';
+  document.getElementById('reg-email').value = '';
+  document.getElementById('reg-password').value = '';
+  clearAuthMessages();
+
+  toast('Signed out.', 'info');
+}
+
+async function checkExistingSession() {
+  if (!token) return;
+  try {
+    currentUser = await api('GET', '/api/auth/me');
+    enterApp();
+  } catch {
+    token = null; localStorage.removeItem('token');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════════════ */
+function enterApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+  document.getElementById('sidebar-username').textContent = currentUser.username;
+  const badge = document.getElementById('sidebar-role-badge');
+  badge.textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+  badge.className = `role-pill role-${currentUser.role}`;
+  buildNavigation();
+  const defaultView = { operator: 'upload', inspector: 'queue', manager: 'stats' };
+  showView(defaultView[currentUser.role] || 'upload');
+}
+
+function buildNavigation() {
+  const navEl = document.getElementById('nav-links');
+  navEl.innerHTML = '';
+  const navMap = {
+    operator: [
+      { id: 'upload',   icon: '📤', label: 'Upload Image' },
+      { id: 'profile',  icon: '⚙️', label: 'Account Settings' },
+    ],
+    inspector: [
+      { id: 'queue',    icon: '⏳', label: 'Review Queue'   },
+      { id: 'history',  icon: '📋', label: 'Review History' },
+      { id: 'profile',  icon: '⚙️', label: 'Account Settings' },
+    ],
+    manager: [
+      { id: 'stats',      icon: '📊', label: 'Dashboard'     },
+      { id: 'all-images', icon: '🗂️',  label: 'All Images'   },
+      { id: 'queue',      icon: '⏳', label: 'Review Queue'  },
+      { id: 'history',    icon: '📋', label: 'History'       },
+      { id: 'users',      icon: '👥', label: 'User Management' },
+      { id: 'upload',     icon: '📤', label: 'Upload'        },
+      { id: 'profile',    icon: '⚙️', label: 'Account Settings' },
+    ],
+  };
+  (navMap[currentUser.role] || []).forEach(item => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button id="nav-${item.id}" onclick="showView('${item.id}')">
+      <span class="nav-icon">${item.icon}</span>${item.label}
+    </button>`;
+    navEl.appendChild(li);
+  });
+}
+
+function showView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  const target = document.getElementById(`view-${viewId}`);
+  if (target) target.classList.remove('hidden');
+  document.querySelectorAll('#nav-links button').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`nav-${viewId}`);
+  if (btn) btn.classList.add('active');
+  // Load data for view
+  const loaders = {
+    'upload':      loadMyImages,
+    'queue':       loadReviewQueue,
+    'all-images':  loadAllImages,
+    'stats':       loadStats,
+    'history':     loadHistory,
+    'users':       loadUsers,
+    'profile':     loadProfile,
+  };
+  if (loaders[viewId]) loaders[viewId]();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   IMAGE UPLOAD & LISTING
+═══════════════════════════════════════════════════════════════ */
+function handleFileSelect(e) { if (e.target.files[0]) previewFile(e.target.files[0]); }
+function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragging'); }
+function handleDragLeave(e) { document.getElementById('upload-zone').classList.remove('dragging'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragging'); if (e.dataTransfer.files[0]) previewFile(e.dataTransfer.files[0]); }
+
+function previewFile(file) {
+  selectedFile = file;
+  document.getElementById('upload-preview').style.display = 'block';
+  document.getElementById('preview-filename').textContent = file.name;
+  document.getElementById('preview-size').textContent = formatBytes(file.size);
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById('preview-img').src = e.target.result; };
+  reader.readAsDataURL(file);
+}
+
+async function doUpload() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('upload-btn');
+  btn.disabled = true; btn.textContent = '⏳ Uploading…';
+  try {
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    const result = await api('POST', '/api/images/upload', fd);
+    toast(`Image #${result.id} submitted — AI is analysing it now`, 'success');
+    selectedFile = null;
+    document.getElementById('upload-preview').style.display = 'none';
+    document.getElementById('preview-img').src = '';
+    document.getElementById('file-input').value = '';
+    loadMyImages();
+  } catch (err) { toast(`Upload failed: ${err.message}`, 'error'); }
+  finally { btn.disabled = false; btn.textContent = '⚡ Submit for Analysis'; }
+}
+
+async function loadMyImages() {
+  const c = document.getElementById('my-images-container');
+  c.innerHTML = '<div class="spinner"></div>';
+  try {
+    const data = await api('GET', '/api/images/?limit=30');
+    c.innerHTML = renderImageTable(data.images, false);
+  } catch (err) { c.innerHTML = emptyState('⚠️', 'Could not load images', err.message); }
+}
+
+async function loadAllImages() {
+  const c = document.getElementById('all-images-container');
+  c.innerHTML = '<div class="spinner"></div>';
+  try {
+    const data = await api('GET', '/api/images/?limit=100');
+    document.getElementById('all-images-count').textContent = `${data.total} total images`;
+    c.innerHTML = renderImageTable(data.images, true);
+  } catch (err) { c.innerHTML = emptyState('⚠️', 'Could not load images', err.message); }
+}
+
+function renderImageTable(images, showUploader) {
+  if (!images || images.length === 0) {
+    return emptyState('📷', 'No images yet', 'Upload a production-line photo to get started.');
+  }
+  const rows = images.map(img => {
+    let aiCol = '<span style="color:var(--text-dim);font-size:12px">—</span>';
+    if (img.detection_result) {
+      const pct = Math.round(img.detection_result.confidence_score * 100);
+      aiCol = img.detection_result.is_defective
+        ? `<span class="badge badge-defective">⚠ Defective</span> <span style="font-size:11px;color:var(--text-muted)">${pct}%</span>`
+        : `<span class="badge badge-clear">✓ Clear</span> <span style="font-size:11px;color:var(--text-muted)">${pct}%</span>`;
+    } else if (img.status === 'processing') {
+      aiCol = '<span style="color:var(--blue);font-size:12px">⚙ Running…</span>';
+    }
+    const uploaderCell = showUploader ? `<td class="td-name">${escHtml(img.uploader?.username || '—')}</td>` : '';
+    return `<tr onclick="openModal(${img.id})">
+      <td style="width:40px"><span style="font-size:20px">🖼</span></td>
+      <td><div class="td-name">${escHtml(img.original_filename)}</div>
+          <div class="td-mono">#${img.id} · ${formatBytes(img.file_size_bytes || 0)}</div></td>
+      ${uploaderCell}
+      <td>${makeStatusBadge(img.status)}</td>
+      <td>${aiCol}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${formatDate(img.uploaded_at)}</td>
+    </tr>`;
+  }).join('');
+  const uploaderHeader = showUploader ? '<th>Uploaded By</th>' : '';
+  return `<div class="table-wrapper"><table>
+    <thead><tr><th></th><th>Filename</th>${uploaderHeader}<th>Status</th><th>AI Verdict</th><th>Uploaded</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVIEW QUEUE & HISTORY
+═══════════════════════════════════════════════════════════════ */
+async function loadReviewQueue() {
+  const c = document.getElementById('queue-container');
+  c.innerHTML = '<div class="spinner"></div>';
+  try {
+    const data = await api('GET', '/api/reviews/queue?limit=50');
+    document.getElementById('queue-count-label').textContent =
+      data.total === 0 ? 'Queue is clear' : `${data.total} image${data.total !== 1 ? 's' : ''} pending review`;
+    if (!data.images.length) {
+      c.innerHTML = emptyState('✅', 'Queue is clear', 'All images have been reviewed.');
+      return;
+    }
+    const rows = data.images.map(img => {
+      if (!img.detection_result) return '';
+      const d = img.detection_result;
+      const pct = Math.round(d.confidence_score * 100);
+      const fillClass = d.is_defective && pct > 80 ? 'high' : pct > 60 ? 'medium' : 'low';
+      const verdict = d.is_defective
+        ? '<span class="badge badge-defective">⚠ Defective</span>'
+        : '<span class="badge badge-clear">✓ Clear</span>';
+      return `<tr onclick="openModal(${img.id})">
+        <td style="width:40px"><span style="font-size:20px">🖼</span></td>
+        <td><div class="td-name">${escHtml(img.original_filename)}</div>
+            <div class="td-mono">#${img.id} · by ${escHtml(img.uploader?.username)}</div></td>
+        <td>${verdict}</td>
+        <td><div class="conf-bar">
+          <div class="conf-track" style="width:72px"><div class="conf-fill ${fillClass}" style="width:${pct}%"></div></div>
+          <span class="conf-label">${pct}%</span>
+        </div></td>
+        <td style="font-size:12px;color:var(--text-muted)">${formatDate(img.uploaded_at)}</td>
+        <td><button class="btn btn-ghost btn-sm" style="border-color:var(--accent);color:var(--accent)" onclick="event.stopPropagation();openModal(${img.id})">Inspect →</button></td>
+      </tr>`;
+    }).join('');
+    c.innerHTML = `<div class="table-wrapper"><table>
+      <thead><tr><th></th><th>Image</th><th>AI Verdict</th><th>Confidence</th><th>Uploaded</th><th>Action</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+  } catch (err) { c.innerHTML = emptyState('⚠️', 'Could not load queue', err.message); }
+}
+
+async function loadHistory() {
+  const c = document.getElementById('history-container');
+  c.innerHTML = '<div class="spinner"></div>';
+  try {
+    const data = await api('GET', '/api/reviews/history?limit=100');
+    document.getElementById('history-count').textContent = `${data.total} completed review${data.total !== 1 ? 's' : ''}`;
+    if (!data.images.length) { c.innerHTML = emptyState('📋', 'No reviews yet', 'Completed reviews will appear here.'); return; }
+    const rows = data.images.map(img => {
+      const aiV = img.detection_result
+        ? (img.detection_result.is_defective ? '<span class="badge badge-defective">⚠ Defective</span>' : '<span class="badge badge-clear">✓ Clear</span>')
+        : '—';
+      const humanV = img.review
+        ? (img.review.decision === 'confirmed_defective' ? '<span class="badge badge-defective">Confirmed</span>' : '<span class="badge badge-clear">Cleared</span>')
+        : '—';
+      const agreed = img.detection_result && img.review
+        ? ((img.detection_result.is_defective && img.review.decision === 'confirmed_defective') ||
+           (!img.detection_result.is_defective && img.review.decision === 'cleared'))
+        : null;
+      const match = agreed === null ? '—' : agreed
+        ? '<span style="color:var(--green);font-size:12px">✓ Match</span>'
+        : '<span style="color:var(--orange);font-size:12px">≠ Override</span>';
+      return `<tr onclick="openModal(${img.id})">
+        <td class="td-name">${escHtml(img.original_filename)}<div class="td-mono">#${img.id}</div></td>
+        <td>${aiV}</td><td>${humanV}</td><td>${match}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${escHtml(img.review?.reviewer?.username || '—')}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${formatDate(img.review?.reviewed_at)}</td>
+      </tr>`;
+    }).join('');
+    c.innerHTML = `<div class="table-wrapper"><table>
+      <thead><tr><th>Image</th><th>AI Verdict</th><th>Human Decision</th><th>Agreement</th><th>Reviewer</th><th>Date</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+  } catch (err) { c.innerHTML = emptyState('⚠️', 'Could not load history', err.message); }
+}
+
+async function submitReview(imageId, decision) {
+  const notes = document.getElementById('review-notes')?.value || '';
+  const btn   = document.getElementById(`btn-${decision}`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
+  try {
+    await api('POST', `/api/reviews/${imageId}`, { decision, notes: notes || null });
+    toast(decision === 'confirmed_defective' ? 'Marked as defective ⚠️' : 'Cleared as OK ✅', 'success');
+    closeModal();
+    loadReviewQueue();
+  } catch (err) {
+    toast(`Could not submit: ${err.message}`, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = decision === 'confirmed_defective' ? '⚠️ Confirm Defective' : '✅ Clear — Not Defective'; }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STATS
+═══════════════════════════════════════════════════════════════ */
+async function loadStats() {
+  const c = document.getElementById('stats-container');
+  c.innerHTML = '<div class="spinner"></div>';
+  try {
+    const s = await api('GET', '/api/reviews/stats');
+    const defectColor = s.defect_rate_percent > 20 ? 'c-red' : s.defect_rate_percent > 10 ? 'c-orange' : 'c-green';
+    const aiColor     = s.ai_accuracy_percent  > 80 ? 'c-green' : s.ai_accuracy_percent > 60 ? 'c-accent' : 'c-red';
+    c.innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Images</div><div class="stat-value c-accent">${s.total_images}</div></div>
+        <div class="stat-card"><div class="stat-label">In Queue</div><div class="stat-value c-blue">${s.awaiting_review_count}</div></div>
+        <div class="stat-card"><div class="stat-label">Reviewed</div><div class="stat-value c-green">${s.reviewed_count}</div></div>
+        <div class="stat-card"><div class="stat-label">Processing</div><div class="stat-value">${s.processing_count + s.pending_count}</div></div>
+        <div class="stat-card"><div class="stat-label">Failed</div><div class="stat-value ${s.failed_count > 0 ? 'c-red' : ''}">${s.failed_count}</div></div>
+        <div class="stat-card"><div class="stat-label">Registered Users</div><div class="stat-value c-violet">${s.total_users}</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Defect Rate</div>
+        <div class="meter-row">
+          <span>Of reviewed images, how many were defective?</span>
+          <span class="stat-value ${defectColor}" style="font-size:22px">${s.defect_rate_percent}%</span>
+        </div>
+        <div class="meter-track"><div class="meter-fill" style="width:${Math.min(s.defect_rate_percent,100)}%;background:var(--red)"></div></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:5px">Industry target: below 5%</div>
+      </div>
+      <div class="card">
+        <div class="card-title">AI Model Accuracy</div>
+        <div class="meter-row">
+          <span>How often did the AI agree with the human decision?</span>
+          <span class="stat-value ${aiColor}" style="font-size:22px">${s.ai_accuracy_percent}%</span>
+        </div>
+        <div class="meter-track"><div class="meter-fill" style="width:${Math.min(s.ai_accuracy_percent,100)}%;background:var(--green)"></div></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:5px">${s.reviewed_count === 0 ? 'No reviews yet.' : `Based on ${s.reviewed_count} review${s.reviewed_count !== 1 ? 's' : ''}`}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Pipeline Breakdown</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          ${miniBar('Pending',         s.pending_count,         s.total_images, 'var(--text-dim)')}
+          ${miniBar('Processing',      s.processing_count,      s.total_images, 'var(--blue)')}
+          ${miniBar('Awaiting Review', s.awaiting_review_count, s.total_images, 'var(--orange)')}
+          ${miniBar('Reviewed',        s.reviewed_count,        s.total_images, 'var(--green)')}
+          ${miniBar('Failed',          s.failed_count,          s.total_images, 'var(--red)')}
+        </div>
+      </div>`;
+  } catch (err) { c.innerHTML = emptyState('⚠️', 'Could not load stats', err.message); }
+}
+function miniBar(label, count, total, color) {
+  const pct = total > 0 ? Math.round((count/total)*100) : 0;
+  return `<div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+      <span style="color:var(--text-muted)">${label}</span>
+      <span style="color:var(--text-dim)">${count} <span style="opacity:0.6">(${pct}%)</span></span>
+    </div>
+    <div style="height:5px;background:var(--surface2);border-radius:3px">
+      <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.5s"></div>
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   USER MANAGEMENT (manager only)
+═══════════════════════════════════════════════════════════════ */
+async function loadUsers() {
+  const c = document.getElementById('users-container');
+  c.innerHTML = '<div class="spinner"></div>';
+  try {
+    const data = await api('GET', '/api/auth/users');
+    document.getElementById('users-count').textContent = `${data.total} registered user${data.total !== 1 ? 's' : ''}`;
+    if (!data.users.length) { c.innerHTML = emptyState('👤', 'No users yet', ''); return; }
+    const rows = data.users.map(u => {
+      const isSelf = u.id === currentUser.id;
+      const activeLabel = u.is_active
+        ? '<span class="badge badge-clear">Active</span>'
+        : '<span class="badge badge-defective">Disabled</span>';
+      const roleSelect = `<select class="role-select" onchange="updateUserRole(${u.id}, this.value)" ${isSelf ? 'disabled' : ''}>
+        <option value="operator"  ${u.role === 'operator'  ? 'selected' : ''}>Operator</option>
+        <option value="inspector" ${u.role === 'inspector' ? 'selected' : ''}>Inspector</option>
+        <option value="manager"   ${u.role === 'manager'   ? 'selected' : ''}>Manager</option>
+      </select>`;
+      const toggleBtn = isSelf ? '' :
+        `<button class="btn btn-sm ${u.is_active ? 'btn-danger' : 'btn-success'}"
+          onclick="toggleUserActive(${u.id}, ${!u.is_active})">
+          ${u.is_active ? 'Disable' : 'Enable'}
+        </button>`;
+      const resetBtn = isSelf ? '' :
+        `<button class="btn btn-ghost btn-sm" style="margin-left:6px"
+          onclick="openResetPasswordModal(${u.id}, '${escHtml(u.username)}')">
+          Reset Password
+        </button>`;
+      return `<tr class="${u.is_active ? 'user-row-active' : 'user-row-inactive'}">
+        <td><div class="td-name">${escHtml(u.username)} ${isSelf ? '<span style="font-size:10px;color:var(--text-muted)">(you)</span>' : ''}</div>
+            <div class="td-mono">#${u.id}</div></td>
+        <td style="font-size:12px;color:var(--text-muted)">${escHtml(u.email)}</td>
+        <td>${roleSelect}</td>
+        <td>${activeLabel}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${formatDate(u.created_at)}</td>
+        <td style="white-space:nowrap">${toggleBtn}${resetBtn}</td>
+      </tr>`;
+    }).join('');
+    c.innerHTML = `<div class="table-wrapper"><table>
+      <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text-muted)">
+      💡 Role changes take effect immediately — the user's next API call will use the new role without requiring re-login (JWT RBAC: role is re-read from the database on every request).
+    </div>`;
+  } catch (err) { c.innerHTML = emptyState('⚠️', 'Could not load users', err.message); }
+}
+
+async function updateUserRole(userId, newRole) {
+  try {
+    await api('PATCH', `/api/auth/users/${userId}`, { role: newRole });
+    toast(`Role updated to ${newRole}`, 'success');
+    loadUsers();
+  } catch (err) { toast(err.message, 'error'); loadUsers(); }
+}
+
+async function toggleUserActive(userId, newActive) {
+  try {
+    await api('PATCH', `/api/auth/users/${userId}`, { is_active: newActive });
+    toast(newActive ? 'Account enabled' : 'Account disabled', newActive ? 'success' : 'info');
+    loadUsers();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+/* --- reset-password modal (separate from the image-detail modal above) --- */
+let resetPasswordTargetId = null;
+
+function openResetPasswordModal(userId, username) {
+  resetPasswordTargetId = userId;
+  document.getElementById('reset-pwd-username').textContent = username;
+  document.getElementById('reset-pwd-input').value = '';
+  hideAlert('reset-pwd-alert');
+  document.getElementById('reset-pwd-form').classList.remove('hidden');
+  document.getElementById('reset-pwd-success').classList.add('hidden');
+  document.getElementById('reset-pwd-modal').classList.remove('hidden');
+  document.getElementById('reset-pwd-input').focus();
+}
+
+function closeResetPasswordModal() {
+  document.getElementById('reset-pwd-modal').classList.add('hidden');
+  resetPasswordTargetId = null;
+  loadUsers();  // refresh in case anything's stale
+}
+
+function generateRandomPassword() {
+  // not trying to be cryptographically clever here, just needs to be
+  // something reasonable to hand to the user — they should change it
+  // themselves the first time they log in
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let pwd = '';
+  for (let i = 0; i < 10; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+  document.getElementById('reset-pwd-input').value = pwd;
+}
+
+async function confirmResetPassword() {
+  hideAlert('reset-pwd-alert');
+  const newPassword = document.getElementById('reset-pwd-input').value;
+  if (!newPassword || newPassword.length < 6) {
+    showAlert('reset-pwd-alert', 'error', 'Password must be at least 6 characters.');
+    return;
+  }
+  try {
+    await api('POST', `/api/auth/users/${resetPasswordTargetId}/reset-password`, { new_password: newPassword });
+    const username = document.getElementById('reset-pwd-username').textContent;
+    // Don't just toast this and close — a toast disappears in a few
+    // seconds and there's no email step to fall back on, so the manager
+    // needs time to actually read and copy this down. Swap the modal
+    // body into a "here's the new password" state instead, and let them
+    // close it manually once they've got it.
+    document.getElementById('reset-pwd-form').classList.add('hidden');
+    document.getElementById('reset-pwd-success').classList.remove('hidden');
+    document.getElementById('reset-pwd-success-username').textContent = username;
+    document.getElementById('reset-pwd-success-value').textContent = newPassword;
+  } catch (err) {
+    showAlert('reset-pwd-alert', 'error', err.message);
+  }
+}
+
+function copyResetPassword() {
+  const value = document.getElementById('reset-pwd-success-value').textContent;
+  navigator.clipboard?.writeText(value).then(() => toast('Copied to clipboard', 'success'))
+    .catch(() => toast('Could not copy — select and copy it manually', 'error'));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROFILE / SETTINGS
+═══════════════════════════════════════════════════════════════ */
+async function loadProfile() {
+  // Pre-fill the current values
+  document.getElementById('prof-username').value = currentUser.username;
+  document.getElementById('prof-email').value    = currentUser.email;
+  // Clear password fields + alerts
+  ['pwd-old','pwd-new','pwd-confirm'].forEach(id => document.getElementById(id).value = '');
+  hideAlert('profile-alert');
+  hideAlert('pwd-alert');
+}
+
+async function saveProfile() {
+  hideAlert('profile-alert');
+  const username = document.getElementById('prof-username').value.trim();
+  const email    = document.getElementById('prof-email').value.trim();
+  if (!username || !email) { showAlert('profile-alert', 'error', 'Username and email cannot be empty.'); return; }
+  try {
+    const updated = await api('PATCH', '/api/auth/me', { username, email });
+    currentUser = { ...currentUser, ...updated };
+    document.getElementById('sidebar-username').textContent = currentUser.username;
+    showAlert('profile-alert', 'success', 'Profile updated successfully.');
+  } catch (err) { showAlert('profile-alert', 'error', err.message); }
+}
+
+async function changePassword() {
+  hideAlert('pwd-alert');
+  const oldPwd = document.getElementById('pwd-old').value;
+  const newPwd = document.getElementById('pwd-new').value;
+  const conf   = document.getElementById('pwd-confirm').value;
+  if (!oldPwd || !newPwd) { showAlert('pwd-alert', 'error', 'Please fill in all password fields.'); return; }
+  if (newPwd !== conf) { showAlert('pwd-alert', 'error', 'New passwords do not match.'); return; }
+  if (newPwd.length < 6) { showAlert('pwd-alert', 'error', 'New password must be at least 6 characters.'); return; }
+  try {
+    await api('POST', '/api/auth/me/password', { old_password: oldPwd, new_password: newPwd });
+    showAlert('pwd-alert', 'success', 'Password changed successfully.');
+    ['pwd-old','pwd-new','pwd-confirm'].forEach(id => document.getElementById(id).value = '');
+  } catch (err) { showAlert('pwd-alert', 'error', err.message); }
+}
+
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = `alert alert-${type}`;
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+function hideAlert(id) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = ''; el.classList.add('hidden'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL — Image detail + review form
+═══════════════════════════════════════════════════════════════ */
+async function openModal(imageId) {
+  const modal = document.getElementById('modal');
+  const body  = document.getElementById('modal-body');
+  modal.classList.remove('hidden');
+  body.innerHTML = '<div class="spinner"></div><div class="loading-text">Loading…</div>';
+
+  try {
+    const img = await api('GET', `/api/images/${imageId}`);
+    document.getElementById('modal-title').textContent = `Image #${img.id} — ${escHtml(img.original_filename)}`;
+
+    let html = '';
+
+    // ── Image (we build a placeholder first, replace src async below) ──
+    // IMPORTANT: do NOT set src="" (triggers onerror), and do NOT use onerror to hide.
+    // We build the element then set its src from the blob fetch below.
+    html += `<div style="text-align:center;margin-bottom:18px;min-height:60px">
+      <img id="modal-img" alt="${escHtml(img.original_filename)}"
+           style="max-width:100%;max-height:290px;border-radius:var(--radius);border:1px solid var(--border);object-fit:contain;background:var(--surface2);display:none;" />
+      <div id="modal-img-spinner" class="spinner" style="margin:16px auto"></div>
+    </div>`;
+
+    // ── Metadata ──
+    html += `<div class="modal-meta">
+      <div class="meta-item"><div class="meta-key">Filename</div><div class="meta-val">${escHtml(img.original_filename)}</div></div>
+      <div class="meta-item"><div class="meta-key">File Size</div><div class="meta-val">${formatBytes(img.file_size_bytes || 0)}</div></div>
+      <div class="meta-item"><div class="meta-key">Uploaded By</div><div class="meta-val">${escHtml(img.uploader?.username || '—')}</div></div>
+      <div class="meta-item"><div class="meta-key">Uploaded At</div><div class="meta-val">${formatDate(img.uploaded_at)}</div></div>
+      <div class="meta-item"><div class="meta-key">Status</div><div class="meta-val">${makeStatusBadge(img.status)}</div></div>
+      <div class="meta-item"><div class="meta-key">Image ID</div><div class="meta-val" style="font-family:var(--font-mono)">#${img.id}</div></div>
+    </div>`;
+
+    // ── AI result ──
+    if (img.detection_result) {
+      const d = img.detection_result;
+      const pct = Math.round(d.confidence_score * 100);
+      const cls = d.is_defective ? 'defective' : 'clear';
+      const fillClass = d.is_defective && pct > 80 ? 'high' : pct > 60 ? 'medium' : 'low';
+      html += `<div class="verdict-box ${cls}">
+        <div class="verdict-lbl">🤖 AI Model Verdict — ${escHtml(d.model_version)}</div>
+        <div class="verdict-result ${cls}">${d.is_defective ? '⚠ DEFECT DETECTED' : '✓ NO DEFECT FOUND'}</div>
+        <div class="conf-bar" style="margin-bottom:4px">
+          <div class="conf-track"><div class="conf-fill ${fillClass}" style="width:${pct}%"></div></div>
+          <span class="conf-label">${pct}% confidence</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Processed: ${formatDate(d.processed_at)}</div>
+      </div>`;
+    } else if (['pending','processing'].includes(img.status)) {
+      html += `<div class="verdict-box neutral"><div class="verdict-lbl">🤖 AI Model</div>
+        <div style="color:var(--blue);font-weight:600">⚙ Analysis in progress…</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:3px">Refresh in a few seconds.</div>
+      </div>`;
+    }
+
+    // ── Human review result ──
+    if (img.review) {
+      const r = img.review;
+      const isDefective = r.decision === 'confirmed_defective';
+      html += `<div class="verdict-box ${isDefective ? 'defective' : 'clear'}" style="margin-top:10px">
+        <div class="verdict-lbl">👤 Inspector Decision</div>
+        <div class="verdict-result ${isDefective ? 'defective' : 'clear'}" style="font-size:16px">
+          ${isDefective ? '⚠ CONFIRMED DEFECTIVE' : '✅ CLEARED — NOT DEFECTIVE'}
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:3px">
+          By <strong>${escHtml(r.reviewer?.username)}</strong> · ${formatDate(r.reviewed_at)}
+        </div>
+        ${r.notes ? `<div style="font-size:13px;margin-top:8px;padding:8px;background:rgba(0,0,0,0.04);border-radius:4px">📝 ${escHtml(r.notes)}</div>` : ''}
+      </div>`;
+    }
+
+    // ── Review form ──
+    const canReview = currentUser.role === 'inspector' || currentUser.role === 'manager';
+    if (img.status === 'awaiting_review' && canReview && !img.review) {
+      html += `<div style="padding-top:14px;border-top:1px solid var(--border);margin-top:12px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Your Decision</div>
+        <div class="form-group">
+          <label for="review-notes">Notes (optional)</label>
+          <textarea id="review-notes" placeholder="Add a comment about this decision…"></textarea>
+        </div>
+        <div class="review-btns">
+          <button id="btn-confirmed_defective" class="btn btn-danger" onclick="submitReview(${img.id}, 'confirmed_defective')">⚠️ Confirm Defective</button>
+          <button id="btn-cleared" class="btn btn-success" onclick="submitReview(${img.id}, 'cleared')">✅ Clear — Not Defective</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted)">This decision is permanently recorded in the audit trail.</div>
+      </div>`;
+    }
+
+    body.innerHTML = html;
+
+    // ── Now fetch the actual image (with auth header) ──
+    // We do this AFTER setting innerHTML so the <img> element exists in the DOM.
+    const imgEl = document.getElementById('modal-img');
+    const spinner = document.getElementById('modal-img-spinner');
+    try {
+      const resp = await fetch(`${API}/api/images/${img.id}/file`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        imgEl.src = blobUrl;
+        imgEl.style.display = 'block';
+        if (spinner) spinner.style.display = 'none';
+      } else {
+        if (spinner) spinner.style.display = 'none';
+      }
+    } catch {
+      if (spinner) spinner.style.display = 'none';
+    }
+
+  } catch (err) {
+    body.innerHTML = emptyState('⚠️', 'Could not load image', err.message);
+  }
+}
+
+function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+function closeModalOnBackdrop(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  closeModal();
+  if (!document.getElementById('reset-pwd-modal').classList.contains('hidden')) closeResetPasswordModal();
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════════════ */
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0'; el.style.transform = 'translateX(110%)';
+    el.style.transition = 'all 0.25s';
+    setTimeout(() => el.remove(), 260);
+  }, 4000);
+}
+
+function makeStatusBadge(status) {
+  const map = {
+    pending:         ['badge-pending',    '⏸ Pending'],
+    processing:      ['badge-processing', '⚙ Processing'],
+    awaiting_review: ['badge-awaiting',   '⏳ Awaiting Review'],
+    reviewed:        ['badge-reviewed',   '✓ Reviewed'],
+    failed:          ['badge-failed',     '✗ Failed'],
+  };
+  const [cls, label] = map[status] || ['badge-pending', status];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function emptyState(icon, title, msg) {
+  return `<div class="empty-state"><div class="empty-icon">${icon}</div>
+    <div class="empty-title">${title}</div>
+    ${msg ? `<div class="empty-msg">${escHtml(msg)}</div>` : ''}</div>`;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatBytes(bytes) {
+  if (!bytes) return '0 B';
+  const u = ['B','KB','MB','GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${u[i]}`;
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+  catch { return iso; }
+}
+
+/* ── Enter key on login / reset-password ─────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (!document.getElementById('login-form').classList.contains('hidden')) doLogin();
+  if (!document.getElementById('register-form').classList.contains('hidden')) doRegister();
+  if (document.activeElement?.id === 'reset-pwd-input') confirmResetPassword();
+});
+
+/* ── Startup ─────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', checkExistingSession);
+</script>
+</body>
+</html>

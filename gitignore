@@ -1,0 +1,28 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.Python
+venv/
+env/
+.venv/
+
+# --- this app's generated/local stuff ---
+defect_detection.db
+*.db
+uploads/*
+!uploads/.gitkeep
+model_state/*
+!model_state/.gitkeep
+
+# --- Redis ---
+dump.rdb
+
+# --- env vars, if you end up using a .env file ---
+.env
+
+# --- editor / OS junk ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
