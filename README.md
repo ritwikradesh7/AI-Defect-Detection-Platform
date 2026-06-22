@@ -42,7 +42,7 @@ The core flow is simple: upload → AI check → human review → permanent reco
 **Frontend**
 - Plain HTML, CSS, and JavaScript — no framework, no build step, just one file
 
-##⚙️ Getting It Running
+## ⚙️ Getting It Running
 
 You'll need Python 3.10+ and Redis. Here's the full setup from a clean clone.
 
