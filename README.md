@@ -20,7 +20,7 @@ The core flow is simple: upload → AI check → human review → permanent reco
 - **Full audit trail** — every upload, every AI verdict, and every human decision is its own row in the database with a timestamp. You can reconstruct the full history of any image.
 - **Stats dashboard** — defect rate, how often the AI and the human agreed, and where everything currently sits in the pipeline, for managers.
 
-## Tech Stack
+## 🔩 Tech Stack
 
 **Backend**
 - FastAPI — the web framework, handles all the API routes
@@ -42,7 +42,7 @@ The core flow is simple: upload → AI check → human review → permanent reco
 **Frontend**
 - Plain HTML, CSS, and JavaScript — no framework, no build step, just one file
 
-## Getting It Running
+##⚙️ Getting It Running
 
 You'll need Python 3.10+ and Redis. Here's the full setup from a clean clone.
 
