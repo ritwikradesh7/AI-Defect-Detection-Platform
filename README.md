@@ -1,10 +1,14 @@
-# DefectSense AI
+# 🦾 DefectSense AI
 
 A defect detection platform for production lines. An operator uploads a photo of a part, a vision model checks it for anything that looks off, and a human inspector makes the final call before anything gets logged for good.
 
 I built this as a portfolio project to put together a backend that actually does the things a real one would need to do — proper auth and roles, a real (if lightweight) ML model, a task queue instead of just running everything inline, and an audit trail you could actually hand to someone.
 
-## What it does
+<img width="1459" height="771" alt="Screenshot 2026-06-23 at 12 01 08 AM" src="https://github.com/user-attachments/assets/f8d3bf3d-b4de-46b6-9db7-107aa0900d09" />
+<img width="1469" height="778" alt="Screenshot 2026-06-23 at 12 00 47 AM" src="https://github.com/user-attachments/assets/71a4d5da-6d78-477c-aa01-b72cc6318c91" />
+
+
+## 🤖 What it does
 
 The core flow is simple: upload → AI check → human review → permanent record.
 
@@ -102,3 +106,5 @@ Three accounts get created automatically the first time you run it:
 Log in as `operator1`, upload a photo, then switch to `inspector1` to see it sitting in the review queue.
 
 ---
+
+
